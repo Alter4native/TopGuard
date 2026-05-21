@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.dev-logs/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Environment
+.env
+.env.*
+!.env.example
+!infra/.env.example
+
+# Local data
+storage/postgres/
+storage/qdrant/
+storage/redis/
+storage/snapshots/
+storage/person-photos/
+storage/logs/
+
+# Models and datasets
+ai-service/models/*
+!ai-service/models/README.md
+ai-service/datasets/*
+!ai-service/datasets/README.md
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.chrome-profile*/
+frontend-render*.png
