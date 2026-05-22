@@ -115,8 +115,8 @@ VITE_AI_BASE_URL=/ai
 Current proxy destinations:
 
 ```text
-/api -> http://213.109.66.109:8080/api
-/ai  -> http://213.109.66.109:8080/ai
+/api -> https://eastern-dare-repeated-reach.trycloudflare.com/api
+/ai  -> https://eastern-dare-repeated-reach.trycloudflare.com/ai
 ```
 
 The same values are documented in `frontend/.env.vercel.example`.
