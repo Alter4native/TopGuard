@@ -104,19 +104,19 @@ Build Command: npm run build
 Output Directory: dist
 ```
 
-Set Vercel environment variables to the public IP or domain where Docker Compose is running.
-If the nginx service is exposed on port 8080:
+Vercel proxies backend and AI service through `frontend/vercel.json`.
+Set Vercel environment variables to relative paths:
 
 ```text
-VITE_API_BASE_URL=http://178.217.172.66:8080/api
-VITE_AI_BASE_URL=http://178.217.172.66:8080/ai
+VITE_API_BASE_URL=/api
+VITE_AI_BASE_URL=/ai
 ```
 
-If backend and ai-service are exposed directly:
+Current proxy destinations:
 
 ```text
-VITE_API_BASE_URL=http://178.217.172.66:8000/api
-VITE_AI_BASE_URL=http://178.217.172.66:8010/ai
+/api -> http://213.109.66.109:8080/api
+/ai  -> http://213.109.66.109:8080/ai
 ```
 
 The same values are documented in `frontend/.env.vercel.example`.
