@@ -94,6 +94,33 @@ npm run build
 npm run dev
 ```
 
+Vercel frontend deployment:
+
+```text
+Root Directory: frontend
+Framework Preset: Vite
+Install Command: npm ci
+Build Command: npm run build
+Output Directory: dist
+```
+
+Set Vercel environment variables to the public IP or domain where Docker Compose is running.
+If the nginx service is exposed on port 8080:
+
+```text
+VITE_API_BASE_URL=http://178.217.172.66:8080/api
+VITE_AI_BASE_URL=http://178.217.172.66:8080/ai
+```
+
+If backend and ai-service are exposed directly:
+
+```text
+VITE_API_BASE_URL=http://178.217.172.66:8000/api
+VITE_AI_BASE_URL=http://178.217.172.66:8010/ai
+```
+
+The same values are documented in `frontend/.env.vercel.example`.
+
 Dashboard capabilities:
 
 - Login via backend JWT (`admin/admin`, `operator/operator`, `viewer/viewer` for local MVP).

@@ -18,6 +18,7 @@ dist/
 .env.*
 !.env.example
 !infra/.env.example
+!frontend/.env.vercel.example
 
 # Local data
 storage/postgres/
