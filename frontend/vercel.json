@@ -2,11 +2,11 @@
     "rewrites":  [
                      {
                          "source":  "/api/:path*",
-                         "destination":  "https://bringing-leave-motor-ann.trycloudflare.com/api/:path*"
+                         "destination":  "https://encouraged-wayne-small-tabs.trycloudflare.com/api/:path*"
                      },
                      {
                          "source":  "/ai/:path*",
-                         "destination":  "https://bringing-leave-motor-ann.trycloudflare.com/ai/:path*"
+                         "destination":  "https://encouraged-wayne-small-tabs.trycloudflare.com/ai/:path*"
                      },
                      {
                          "source":  "/(.*)",
