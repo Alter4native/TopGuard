@@ -42,17 +42,17 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
     <section className="page-stack">
       <div className="section-heading">
         <div>
-          <h2>Events</h2>
-          <p>Filter person detections, camera status events, restricted zone entries and people count updates.</p>
+          <h2>События</h2>
+          <p>Фильтруйте детекции людей, статусы камер, входы в зоны и обновления счетчика людей.</p>
         </div>
       </div>
 
       <article className="panel">
         <form className="filter-bar" onSubmit={handleSubmit}>
           <label>
-            Camera
+            Камера
             <select value={draft.cameraId ?? ""} onChange={(event) => setDraft({ ...draft, cameraId: event.target.value })}>
-              <option value="">All cameras</option>
+              <option value="">Все камеры</option>
               {cameras.map((camera) => (
                 <option key={camera.camera_id} value={camera.camera_id}>
                   {camera.name}
@@ -61,12 +61,12 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
             </select>
           </label>
           <label>
-            Event type
+            Тип события
             <select
               value={draft.eventType ?? ""}
               onChange={(event) => setDraft({ ...draft, eventType: event.target.value as EventType | "" })}
             >
-              <option value="">All events</option>
+              <option value="">Все события</option>
               {eventTypes.map((eventType) => (
                 <option key={eventType} value={eventType}>
                   {eventTypeLabel(eventType)}
@@ -75,7 +75,7 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
             </select>
           </label>
           <label>
-            From
+            С
             <input
               type="datetime-local"
               value={draft.dateFrom ?? ""}
@@ -83,7 +83,7 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
             />
           </label>
           <label>
-            To
+            По
             <input
               type="datetime-local"
               value={draft.dateTo ?? ""}
@@ -92,7 +92,7 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
           </label>
           <button className="primary-button" type="submit">
             <Filter aria-hidden="true" />
-            Apply
+            Применить
           </button>
           <button
             className="secondary-button"
@@ -102,7 +102,7 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
               void onApplyFilters({});
             }}
           >
-            Clear
+            Сбросить
           </button>
         </form>
       </article>
@@ -110,21 +110,21 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
       <article className="panel events-panel">
         <div className="panel-header">
           <div>
-            <h2>Event stream</h2>
-            <span>{events.length} events</span>
+            <h2>Лента событий</h2>
+            <span>{events.length} событие(й)</span>
           </div>
           <CalendarDays aria-hidden="true" />
         </div>
 
         {events.length ? (
-          <div className="events-table" role="table" aria-label="Events">
+          <div className="events-table" role="table" aria-label="События">
             <div className="events-row events-head" role="row">
-              <span>Time</span>
-              <span>Type</span>
-              <span>Camera</span>
-              <span>Confidence</span>
-              <span>Snapshot</span>
-              <span>Action</span>
+              <span>Время</span>
+              <span>Тип</span>
+              <span>Камера</span>
+              <span>Уверенность</span>
+              <span>Снимок</span>
+              <span>Действие</span>
             </div>
             {events.map((event) => (
               <div className="events-row" role="row" key={event.event_id}>
@@ -133,7 +133,7 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
                 <span>{cameraById.get(event.camera_id) ?? event.camera_id}</span>
                 <span>{formatPercent(event.confidence)}</span>
                 <span>
-                  <StatusBadge tone={snapshotTone(event)}>{event.snapshot_url ? "Private" : "None"}</StatusBadge>
+                  <StatusBadge tone={snapshotTone(event)}>{event.snapshot_url ? "закрытый" : "нет"}</StatusBadge>
                 </span>
                 <span>
                   <button
@@ -143,14 +143,14 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
                     onClick={() => onLoadSnapshot(event.event_id)}
                   >
                     <Image aria-hidden="true" />
-                    View
+                    Открыть
                   </button>
                 </span>
               </div>
             ))}
           </div>
         ) : (
-          <EmptyState title="No matching events" body="Adjust filters or start AI-service to ingest detections." />
+          <EmptyState title="Событий не найдено" body="Измените фильтры или запустите AI-сервис для приема детекций." />
         )}
       </article>
 
@@ -158,15 +158,15 @@ export function EventsPage({ cameras, events, filters, snapshot, onApplyFilters,
         <article className="panel snapshot-panel">
           <div className="panel-header">
             <div>
-              <h2>Authorized snapshot</h2>
-              <span>Snapshot is resolved through API, not a public static URL.</span>
+              <h2>Авторизованный снимок</h2>
+              <span>Снимок доступен через API и не публикуется как открытый static URL.</span>
             </div>
             <StatusBadge tone="good">{snapshot.access}</StatusBadge>
           </div>
           <div className="snapshot-preview">
             <Image aria-hidden="true" />
             <div>
-              <span>Storage key</span>
+              <span>Ключ хранения</span>
               <strong>{snapshot.snapshot_storage_key}</strong>
             </div>
           </div>

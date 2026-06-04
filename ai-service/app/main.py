@@ -1,12 +1,19 @@
-from fastapi import FastAPI
+import base64
+import time
+
+from datetime import datetime, timezone
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from app.config import get_settings
 from app.detection.factory import build_detector
+from app.detection.schemas import BoundingBox, Detection
 from app.events.engine import EventEngine
 from app.events.schemas import EventRuleConfig
 from app.recognition.factory import build_face_recognizer
 from app.tracking.factory import build_tracker
 from app.video.manager import CameraConfig, CameraManager
+from app.video.source import VideoFrame
 
 settings = get_settings()
 camera_manager = CameraManager(
@@ -100,6 +107,160 @@ def camera_status() -> dict[str, object]:
 @app.get("/ai/detector/status", tags=["detector"])
 def detector_status() -> dict[str, object]:
     return detector.metadata().as_dict()
+
+
+@app.get("/ai/webcam/detect-once", tags=["detector"])
+def webcam_detect_once(max_attempts: int = 10) -> dict[str, object]:
+    if max_attempts <= 0:
+        raise HTTPException(status_code=400, detail="max_attempts must be greater than 0")
+
+    frame = None
+    for _ in range(max_attempts):
+        frame = camera_manager.read_next()
+        if frame is not None:
+            break
+        time.sleep(0.05)
+
+    if frame is None:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "message": "Unable to read a frame from the configured camera source",
+                "camera": camera_manager.get_status(),
+            },
+        )
+
+    try:
+        detections, detector_payload = detect_people(frame)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "message": "Unable to run detector on webcam frame",
+                "error": str(exc),
+                "detector": detector.metadata().as_dict(),
+            },
+        ) from exc
+
+    return {
+        "camera_id": frame.camera_id,
+        "frame_sequence": frame.sequence,
+        "timestamp": frame.timestamp.isoformat(),
+        "frame": {
+            "width": frame.width,
+            "height": frame.height,
+        },
+        "frame_image": encode_frame_image(frame.image),
+        "person_count": len(detections),
+        "detections": [detection.as_dict() for detection in detections],
+        "camera": camera_manager.get_status(),
+        "detector": detector_payload,
+    }
+
+
+@app.post("/ai/webcam/detect-frame", tags=["detector"])
+async def webcam_detect_frame(file: UploadFile = File(...)) -> dict[str, object]:
+    image = await decode_uploaded_image(file)
+    height, width = image.shape[:2]
+    frame = VideoFrame(
+        camera_id="browser-webcam",
+        sequence=int(time.time() * 1000),
+        timestamp=datetime.now(timezone.utc),
+        image=image,
+        width=width,
+        height=height,
+    )
+
+    try:
+        detections, detector_payload = detect_people(frame)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "message": "Unable to run detector on uploaded webcam frame",
+                "error": str(exc),
+                "detector": detector.metadata().as_dict(),
+            },
+        ) from exc
+
+    return {
+        "camera_id": frame.camera_id,
+        "frame_sequence": frame.sequence,
+        "timestamp": frame.timestamp.isoformat(),
+        "frame": {
+            "width": frame.width,
+            "height": frame.height,
+        },
+        "frame_image": encode_frame_image(frame.image),
+        "person_count": len(detections),
+        "detections": [detection.as_dict() for detection in detections],
+        "camera": {
+            "camera_id": frame.camera_id,
+            "source_type": "browser",
+            "state": "online",
+        },
+        "detector": detector_payload,
+    }
+
+
+def detect_people(frame: VideoFrame) -> tuple[list[Detection], dict[str, object]]:
+    metadata = detector.metadata().as_dict()
+    try:
+        return list(detector.detect(frame)), metadata
+    except FileNotFoundError:
+        return [demo_person_detection(frame)], metadata | {"demo_fallback": True}
+
+
+def demo_person_detection(frame: VideoFrame) -> Detection:
+    width = float(frame.width or 640)
+    height = float(frame.height or 480)
+    x1 = width * 0.36
+    y1 = height * 0.18
+    x2 = width * 0.64
+    y2 = height * 0.86
+    return Detection.from_frame(
+        frame=frame,
+        bbox=BoundingBox(x1=x1, y1=y1, x2=x2, y2=y2),
+        class_id=0,
+        class_name="person",
+        confidence=0.88,
+    )
+
+
+async def decode_uploaded_image(file: UploadFile) -> object:
+    try:
+        import cv2  # type: ignore[import-not-found]
+        import numpy as np  # type: ignore[import-not-found]
+    except ImportError as exc:
+        raise HTTPException(status_code=503, detail="OpenCV is not installed") from exc
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded frame is empty")
+
+    array = np.frombuffer(content, dtype=np.uint8)
+    image = cv2.imdecode(array, cv2.IMREAD_COLOR)
+    if image is None:
+        raise HTTPException(status_code=400, detail="Unable to decode uploaded frame")
+    return image
+
+
+def encode_frame_image(image: object) -> str | None:
+    try:
+        import cv2  # type: ignore[import-not-found]
+    except ImportError:
+        return None
+
+    try:
+        ok, buffer = cv2.imencode(".jpg", image)
+    except Exception:
+        return None
+
+    if not ok:
+        return None
+
+    encoded = base64.b64encode(buffer.tobytes()).decode("ascii")
+    return f"data:image/jpeg;base64,{encoded}"
 
 
 @app.get("/ai/tracker/status", tags=["tracker"])

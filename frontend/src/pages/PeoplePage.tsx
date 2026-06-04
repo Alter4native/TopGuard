@@ -39,8 +39,8 @@ export function PeoplePage({ persons, onCreate, onUploadPhoto, onDeleteEmbedding
     <section className="page-stack">
       <div className="section-heading">
         <div>
-          <h2>Known people</h2>
-          <p>Manage people allowed for face recognition. Raw embeddings are never shown in the dashboard.</p>
+          <h2>Люди</h2>
+          <p>Управляйте профилями для распознавания лиц. Сырые embeddings не показываются в интерфейсе.</p>
         </div>
       </div>
 
@@ -48,8 +48,8 @@ export function PeoplePage({ persons, onCreate, onUploadPhoto, onDeleteEmbedding
         <article className="panel">
           <div className="panel-header">
             <div>
-              <h2>People registry</h2>
-              <span>{persons.length} profiles</span>
+              <h2>Реестр людей</h2>
+              <span>{persons.length} профиль(ей)</span>
             </div>
           </div>
           {persons.length ? (
@@ -59,50 +59,52 @@ export function PeoplePage({ persons, onCreate, onUploadPhoto, onDeleteEmbedding
                   <div className="avatar">{person.display_name.slice(0, 1).toUpperCase()}</div>
                   <div>
                     <strong>{person.display_name}</strong>
-                    <span>{person.external_id ?? "No external ID"} - {person.photo_count} photos</span>
+                    <span>
+                      {person.external_id ?? "Без внешнего ID"} - фото: {person.photo_count}
+                    </span>
                   </div>
                   <button className="text-button danger-text" type="button" onClick={() => onDeleteEmbeddings(person.person_id)}>
                     <Trash2 aria-hidden="true" />
-                    Embeddings
+                    Удалить embeddings
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyState title="No known people" body="Create a profile, upload a face photo, then register embedding metadata." />
+            <EmptyState title="Профилей пока нет" body="Создайте профиль, загрузите фото лица и зарегистрируйте metadata embedding." />
           )}
         </article>
 
         <article className="panel">
           <div className="panel-header">
             <div>
-              <h2>Create person</h2>
-              <span>Admin/operator only</span>
+              <h2>Создать профиль</h2>
+              <span>Доступно администратору и оператору</span>
             </div>
             <UserPlus aria-hidden="true" />
           </div>
           <form className="form-grid" onSubmit={handleCreate}>
             <label>
-              Display name
+              Имя
               <input
                 value={draft.display_name}
                 onChange={(event) => setDraft({ ...draft, display_name: event.target.value })}
               />
             </label>
             <label>
-              External ID
+              Внешний ID
               <input
                 value={draft.external_id ?? ""}
                 onChange={(event) => setDraft({ ...draft, external_id: event.target.value })}
               />
             </label>
             <label>
-              Notes
+              Заметки
               <textarea value={draft.notes ?? ""} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} />
             </label>
             <button className="primary-button" type="submit">
               <UserPlus aria-hidden="true" />
-              Create person
+              Создать профиль
             </button>
           </form>
         </article>
@@ -111,16 +113,16 @@ export function PeoplePage({ persons, onCreate, onUploadPhoto, onDeleteEmbedding
       <article className="panel">
         <div className="panel-header">
           <div>
-            <h2>Upload recognition photo</h2>
-            <span>Photo upload is authorized; vector profile metadata is registered after upload.</span>
+            <h2>Загрузить фото для распознавания</h2>
+            <span>После загрузки фото регистрируется metadata векторного профиля.</span>
           </div>
           <Upload aria-hidden="true" />
         </div>
         <form className="filter-bar" onSubmit={handleUpload}>
           <label>
-            Person
+            Человек
             <select value={selectedPersonId} onChange={(event) => setSelectedPersonId(event.target.value)}>
-              <option value="">Select person</option>
+              <option value="">Выберите профиль</option>
               {persons.map((person) => (
                 <option key={person.person_id} value={person.person_id}>
                   {person.display_name}
@@ -129,7 +131,7 @@ export function PeoplePage({ persons, onCreate, onUploadPhoto, onDeleteEmbedding
             </select>
           </label>
           <label>
-            Face photo
+            Фото лица
             <input
               type="file"
               accept="image/*"
@@ -138,10 +140,10 @@ export function PeoplePage({ persons, onCreate, onUploadPhoto, onDeleteEmbedding
           </label>
           <button className="primary-button" type="submit" disabled={!selectedPersonId || !selectedFile}>
             <Upload aria-hidden="true" />
-            Upload
+            Загрузить
           </button>
         </form>
-        <p className="fine-print">Last registry update is shown in person rows. Current time: {formatDateTime(new Date().toISOString())}</p>
+        <p className="fine-print">Текущее время панели: {formatDateTime(new Date().toISOString())}</p>
       </article>
     </section>
   );

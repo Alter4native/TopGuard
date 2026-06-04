@@ -6,7 +6,7 @@ export function canWrite(role: Role): boolean {
 
 export function formatDateTime(value: string | null): string {
   if (!value) {
-    return "N/A";
+    return "Нет данных";
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -24,14 +24,22 @@ export function formatPercent(value: number): string {
 
 export function stateLabel(state: CameraState): string {
   const labels: Record<CameraState, string> = {
-    online: "Online",
-    offline: "Offline",
-    stopped: "Stopped",
-    error: "Error",
+    online: "Онлайн",
+    offline: "Офлайн",
+    stopped: "Остановлена",
+    error: "Ошибка",
   };
   return labels[state];
 }
 
 export function eventTypeLabel(eventType: EventType): string {
-  return eventType.replaceAll("_", " ");
+  const labels: Record<EventType, string> = {
+    person_detected: "Обнаружен человек",
+    known_person_detected: "Известный человек",
+    unknown_person_detected: "Неизвестный человек",
+    restricted_zone_entry: "Вход в запретную зону",
+    camera_offline: "Камера офлайн",
+    people_count: "Подсчет людей",
+  };
+  return labels[eventType];
 }

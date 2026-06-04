@@ -22,18 +22,18 @@ export function LoginScreen({ error, loading, onLogin }: LoginScreenProps) {
         <div className="login-brand">
           <ShieldCheck aria-hidden="true" />
           <div>
-            <h1>AI Camera Platform</h1>
-            <p>Person-only camera intelligence dashboard</p>
+            <h1>TopGuard</h1>
+            <p>Панель видеоаналитики и детекции людей</p>
           </div>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label>
-            Username
+            Логин
             <input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" />
           </label>
           <label>
-            Password
+            Пароль
             <input
               value={password}
               type="password"
@@ -44,11 +44,11 @@ export function LoginScreen({ error, loading, onLogin }: LoginScreenProps) {
           {error ? <p className="form-error">{error}</p> : null}
           <button className="primary-button" type="submit" disabled={loading}>
             <Lock aria-hidden="true" />
-            {loading ? "Signing in" : "Sign in"}
+            {loading ? "Вход..." : "Войти"}
           </button>
         </form>
 
-        <p className="login-hint">Local MVP users: admin/admin, operator/operator, viewer/viewer.</p>
+        <p className="login-hint">Демо-пользователи: admin/admin, operator/operator, viewer/viewer.</p>
       </section>
     </main>
   );

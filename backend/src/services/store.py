@@ -11,11 +11,13 @@ from src.schemas.domain import (
     EventRead,
     EventType,
     ModelVersionRead,
+    AlgorithmQualityRead,
     PersonCreate,
     PersonEmbeddingCreate,
     PersonEmbeddingRead,
     PersonPhotoRead,
     PersonRead,
+    QualityAnalysisRead,
     Role,
     SettingsRead,
     SettingsUpdate,
@@ -46,7 +48,7 @@ class AppStore:
         self.add_user(username="viewer", password="viewer", role=Role.VIEWER)
         self.create_camera(
             CameraCreate(
-                name="Local camera",
+                name="Локальная камера",
                 source_type="webcam",
                 source_uri="0",
                 enabled=True,
@@ -56,10 +58,10 @@ class AppStore:
         model_id = str(uuid4())
         self.models[model_id] = ModelVersionRead(
             model_id=model_id,
-            name="YOLO person detector",
+            name="YOLO детектор людей",
             version="mvp",
             runtime="yolo",
-            path="/app/models/yolo-person.pt",
+            path="/app/models/yolov8n.pt",
             active=True,
             created_at=utc_now(),
         )
@@ -234,6 +236,84 @@ class AppStore:
 
     def list_models(self) -> list[ModelVersionRead]:
         return list(self.models.values())
+
+    def quality_analysis(self) -> QualityAnalysisRead:
+        embeddings = [
+            embedding
+            for person_embeddings in self.person_embeddings.values()
+            for embedding in person_embeddings
+            if embedding.active
+        ]
+        embedding_count = len(embeddings)
+        enrolled_person_count = len({embedding.person_id for embedding in embeddings})
+        threshold = self.settings.face_recognition_threshold
+        cosine_eps = round(max(0.01, min(0.99, 1.0 - threshold)), 2)
+        dbscan_status = "ready" if embedding_count >= 2 else "needs_data"
+        kmeans_status = "ready" if embedding_count >= 2 and enrolled_person_count >= 2 else "needs_data"
+        kmeans_clusters = min(max(enrolled_person_count, 2), embedding_count) if embedding_count >= 2 else 0
+
+        dbscan = AlgorithmQualityRead(
+            algorithm="DBSCAN",
+            status=dbscan_status,
+            samples=embedding_count,
+            parameters={
+                "distance": "cosine",
+                "eps": cosine_eps,
+                "min_samples": min(max(2, embedding_count // 2), 5) if embedding_count else 2,
+                "recognition_threshold": threshold,
+            },
+            metrics={"clusters": None, "noise_ratio": None, "silhouette": None},
+            analysis=[
+                "DBSCAN подходит для поиска неизвестных людей, потому что умеет помечать редкие embeddings как шум.",
+                (
+                    "Metadata достаточно, чтобы запустить кластеризацию по сохраненным векторам."
+                    if dbscan_status == "ready"
+                    else "Для осмысленной кластеризации DBSCAN нужны минимум два активных embedding."
+                ),
+                "Живые метрики кластеров требуют сырые векторы из vector DB; сейчас API возвращает план анализа.",
+            ],
+            recommendations=[
+                "После первого vector-backed scan проверьте noise_ratio: высокий шум обычно означает слишком строгий порог или слабое качество лиц.",
+                "При настройке cosine-distance кластеризации держите eps согласованным с face_recognition_threshold.",
+            ],
+        )
+        kmeans = AlgorithmQualityRead(
+            algorithm="K-Means",
+            status=kmeans_status,
+            samples=embedding_count,
+            parameters={
+                "distance": "cosine",
+                "k": kmeans_clusters,
+                "initialization": "k-means++",
+                "expected_person_clusters": enrolled_person_count,
+            },
+            metrics={"inertia": None, "silhouette": None, "cluster_balance": None},
+            analysis=[
+                "K-Means полезен для проверки, разделяются ли зарегистрированные личности на компактные группы.",
+                (
+                    f"Текущую выборку можно оценивать с k={kmeans_clusters}."
+                    if kmeans_status == "ready"
+                    else "Для K-Means нужны активные embeddings минимум двух зарегистрированных людей."
+                ),
+                "Silhouette и inertia появятся после загрузки векторов для offline или vector-backed quality job.",
+            ],
+            recommendations=[
+                "Перед принятием новой модели сравните silhouette на k рядом с количеством зарегистрированных людей.",
+                "Проверяйте смешанные кластеры: они могут указывать на дубли профилей или слабые face crops.",
+            ],
+        )
+
+        return QualityAnalysisRead(
+            status="available",
+            dataset={
+                "active_embeddings": embedding_count,
+                "enrolled_persons": enrolled_person_count,
+                "registered_persons": len(self.persons),
+                "models": len(self.models),
+                "active_models": sum(1 for model in self.models.values() if model.active),
+            },
+            algorithms=[dbscan, kmeans],
+        )
 
     def get_settings(self) -> SettingsRead:
         return self.settings

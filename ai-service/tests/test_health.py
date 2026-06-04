@@ -1,6 +1,45 @@
+from datetime import datetime, timezone
+
 from fastapi.testclient import TestClient
 
+from app.detection.schemas import BoundingBox, Detection, DetectorMetadata
 from app.main import app
+import app.main as main_module
+from app.video.source import VideoFrame
+
+
+class FakeCameraManager:
+    def __init__(self, frame: VideoFrame | None) -> None:
+        self.frame = frame
+
+    def read_next(self) -> VideoFrame | None:
+        return self.frame
+
+    def get_status(self) -> dict[str, object]:
+        return {
+            "camera_id": "test-camera",
+            "source_type": "webcam",
+            "source_uri": "0",
+            "processing_fps": 5,
+            "state": "online" if self.frame is not None else "offline",
+        }
+
+
+class FakeDetector:
+    def __init__(self, detections: list[Detection]) -> None:
+        self.detections = detections
+
+    def detect(self, frame: VideoFrame) -> list[Detection]:
+        return self.detections
+
+    def metadata(self) -> DetectorMetadata:
+        return DetectorMetadata(
+            runtime="fake",
+            model_path="fake.pt",
+            scope="person-only",
+            confidence_threshold=0.5,
+            loaded=True,
+        )
 
 
 def test_ai_health() -> None:
@@ -15,7 +54,7 @@ def test_ai_health() -> None:
     assert payload["camera"]["status"]["state"] == "stopped"
     assert payload["detector"] == {
         "runtime": "yolo",
-        "model_path": "/app/models/yolo-person.pt",
+        "model_path": "yolov8n.pt",
         "scope": "person-only",
         "confidence_threshold": 0.5,
         "loaded": False,
@@ -70,6 +109,37 @@ def test_detector_status_endpoint() -> None:
     assert payload["runtime"] == "yolo"
     assert payload["scope"] == "person-only"
     assert payload["loaded"] is False
+
+
+def test_webcam_detect_once_returns_detections(monkeypatch) -> None:
+    frame = VideoFrame(
+        camera_id="test-camera",
+        sequence=3,
+        timestamp=datetime(2026, 6, 4, tzinfo=timezone.utc),
+        image=object(),
+        width=640,
+        height=480,
+    )
+    detection = Detection.from_frame(
+        frame=frame,
+        bbox=BoundingBox(x1=10, y1=20, x2=110, y2=220),
+        class_id=0,
+        class_name="person",
+        confidence=0.91,
+    )
+    monkeypatch.setattr(main_module, "camera_manager", FakeCameraManager(frame))
+    monkeypatch.setattr(main_module, "detector", FakeDetector([detection]))
+    client = TestClient(app)
+
+    response = client.get("/ai/webcam/detect-once")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["camera_id"] == "test-camera"
+    assert payload["frame"] == {"width": 640, "height": 480}
+    assert payload["person_count"] == 1
+    assert payload["detections"][0]["class_name"] == "person"
+    assert payload["detections"][0]["confidence"] == 0.91
 
 
 def test_tracker_status_endpoint() -> None:

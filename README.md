@@ -121,6 +121,16 @@ Current proxy destinations:
 
 The same values are documented in `frontend/.env.vercel.example`.
 
+Quick demo tunnel:
+
+```powershell
+.\scripts\start_demo_tunnel.ps1 -Push
+```
+
+This starts a temporary Cloudflare Tunnel for local Docker nginx on `http://127.0.0.1:8081`,
+updates `frontend/vercel.json`, commits and pushes the new tunnel URL so Vercel can redeploy.
+Keep the `cloudflared` process running during the demo.
+
 Dashboard capabilities:
 
 - Login via backend JWT (`admin/admin`, `operator/operator`, `viewer/viewer` for local MVP).
@@ -149,7 +159,7 @@ The exact RTSP path depends on the camera vendor/model.
 
 ## URLs
 
-- Frontend via Compose nginx: `http://localhost:8080`
+- Frontend via Compose nginx: `http://localhost:8081`
 - Backend health: `http://localhost:8000/api/health`
 - AI service health: `http://localhost:8010/ai/health`
 - AI service camera status: `http://localhost:8010/ai/camera/status`

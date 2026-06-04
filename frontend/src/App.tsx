@@ -5,10 +5,12 @@ import {
   createCamera,
   createPerson,
   deletePersonEmbeddings,
+  detectWebcamFrame,
   getAiHealth,
   getAiVectorStatus,
   getEmbeddingStatus,
   getMe,
+  getModelQuality,
   getSettings,
   getSnapshotMetadata,
   listCameras,
@@ -37,8 +39,10 @@ import type {
   Person,
   PersonPayload,
   ModelVersion,
+  QualityAnalysis,
   Settings,
   SnapshotMetadata,
+  WebcamDetection,
 } from "./types";
 import { canWrite } from "./utils/format";
 
@@ -56,7 +60,7 @@ function errorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return "Unexpected error";
+  return "Неожиданная ошибка";
 }
 
 export function App() {
@@ -70,8 +74,10 @@ export function App() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [persons, setPersons] = useState<Person[]>([]);
   const [models, setModels] = useState<ModelVersion[]>([]);
+  const [quality, setQuality] = useState<QualityAnalysis | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [snapshot, setSnapshot] = useState<SnapshotMetadata | null>(null);
+  const [webcamDetection, setWebcamDetection] = useState<WebcamDetection | null>(null);
   const [aiHealth, setAiHealth] = useState<unknown>(null);
   const [vectorStatus, setVectorStatus] = useState<unknown>(null);
   const [embeddingStatus, setEmbeddingStatus] = useState<unknown>(null);
@@ -86,12 +92,23 @@ export function App() {
     try {
       const token = session.tokens.access_token;
       const writable = canWrite(session.user.role);
-      const [cameraResult, eventResult, personResult, modelResult, settingsResult, aiResult, vectorResult, embeddingResult] =
+      const [
+        cameraResult,
+        eventResult,
+        personResult,
+        modelResult,
+        qualityResult,
+        settingsResult,
+        aiResult,
+        vectorResult,
+        embeddingResult,
+      ] =
         await Promise.allSettled([
           listCameras(token),
           listEvents(token, eventFilters),
           writable ? listPersons(token) : Promise.resolve([]),
           listModels(token),
+          getModelQuality(token),
           getSettings(token),
           getAiHealth(),
           getAiVectorStatus(),
@@ -102,6 +119,7 @@ export function App() {
       if (eventResult.status === "fulfilled") setEvents(eventResult.value);
       if (personResult.status === "fulfilled") setPersons(personResult.value);
       if (modelResult.status === "fulfilled") setModels(modelResult.value);
+      if (qualityResult.status === "fulfilled") setQuality(qualityResult.value);
       if (settingsResult.status === "fulfilled") setSettings(settingsResult.value);
       if (aiResult.status === "fulfilled") setAiHealth(aiResult.value);
       if (vectorResult.status === "fulfilled") setVectorStatus(vectorResult.value);
@@ -112,6 +130,7 @@ export function App() {
         eventResult,
         personResult,
         modelResult,
+        qualityResult,
         settingsResult,
         aiResult,
         vectorResult,
@@ -119,7 +138,7 @@ export function App() {
       ].filter((result) => result.status === "rejected").length;
 
       if (failed > 0) {
-        setNotice(`${failed} dashboard request failed. Check backend/AI-service status.`);
+        setNotice(`${failed} запроса панели не выполнились. Проверьте backend и AI-service.`);
       }
     } finally {
       setLoading(false);
@@ -160,6 +179,7 @@ export function App() {
     setEvents([]);
     setPersons([]);
     setSnapshot(null);
+    setWebcamDetection(null);
   }
 
   async function runMutation(action: () => Promise<void>, success: string) {
@@ -178,14 +198,14 @@ export function App() {
 
   async function handleCreateCamera(payload: CameraPayload) {
     if (!session) return;
-    await runMutation(() => createCamera(session.tokens.access_token, payload).then(() => undefined), "Camera created.");
+    await runMutation(() => createCamera(session.tokens.access_token, payload).then(() => undefined), "Камера добавлена.");
   }
 
   async function handleUpdateCamera(cameraId: string, payload: Partial<CameraPayload>) {
     if (!session) return;
     await runMutation(
       () => updateCamera(session.tokens.access_token, cameraId, payload).then(() => undefined),
-      "Camera updated.",
+      "Камера обновлена.",
     );
   }
 
@@ -218,7 +238,7 @@ export function App() {
 
   async function handleCreatePerson(payload: PersonPayload) {
     if (!session) return;
-    await runMutation(() => createPerson(session.tokens.access_token, payload).then(() => undefined), "Person created.");
+    await runMutation(() => createPerson(session.tokens.access_token, payload).then(() => undefined), "Профиль создан.");
   }
 
   async function handleUploadPersonPhoto(personId: string, file: File) {
@@ -230,14 +250,14 @@ export function App() {
         photo_id: photo.photo_id,
         threshold: settings?.face_recognition_threshold ?? defaultEmbeddingPayload.threshold,
       });
-    }, "Photo uploaded and embedding metadata registered.");
+    }, "Фото загружено, metadata embedding зарегистрирована.");
   }
 
   async function handleDeleteEmbeddings(personId: string) {
     if (!session) return;
     await runMutation(
       () => deletePersonEmbeddings(session.tokens.access_token, personId).then(() => undefined),
-      "Person embeddings delete requested.",
+      "Удаление embeddings запрошено.",
     );
   }
 
@@ -245,8 +265,23 @@ export function App() {
     if (!session) return;
     await runMutation(
       () => updateSettings(session.tokens.access_token, payload).then((updated) => setSettings(updated)),
-      "Settings updated.",
+      "Настройки сохранены.",
     );
+  }
+
+  async function handleWebcamDetect(frame: Blob) {
+    setLoading(true);
+    setNotice(null);
+    try {
+      const result = await detectWebcamFrame(frame);
+      setWebcamDetection(result);
+      setNotice(`Детекция завершена: найдено людей ${result.person_count}.`);
+      await loadDashboard();
+    } catch (error) {
+      setNotice(errorMessage(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (!session) {
@@ -273,6 +308,9 @@ export function App() {
           settings={settings}
           aiHealth={aiHealth}
           vectorStatus={vectorStatus}
+          detection={webcamDetection}
+          loading={loading}
+          onDetectWebcam={handleWebcamDetect}
         />
       ) : null}
 
@@ -310,6 +348,7 @@ export function App() {
           role={session.user.role}
           settings={settings}
           models={models}
+          quality={quality}
           vectorStatus={vectorStatus}
           embeddingStatus={embeddingStatus}
           onUpdate={handleUpdateSettings}

@@ -85,9 +85,9 @@ Frontend:
 ## 7. URLs
 
 Локальный запуск через Compose nginx:
-- frontend: `http://localhost:8080`
-- backend API через nginx: `http://localhost:8080/api`
-- ai-service health через nginx: `http://localhost:8080/ai/health`
+- frontend: `http://localhost:8081`
+- backend API через nginx: `http://localhost:8081/api`
+- ai-service health через nginx: `http://localhost:8081/ai/health`
 
 Локальный dev запуск:
 - backend direct: `http://localhost:8000/api/health`

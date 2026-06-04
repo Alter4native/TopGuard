@@ -1,4 +1,4 @@
-# AI Camera Platform - Architecture
+оооооооо+# AI Camera Platform - Architecture
 
 ## 1. Scope MVP
 
@@ -404,7 +404,7 @@ Detection contract:
 - `confidence`
 
 Ограничения этапа:
-- реальная YOLO модель не скачивается автоматически;
+- если локальный `.pt` файл отсутствует, YOLO adapter использует pretrained `yolov8n.pt`;
 - detector еще не подключен к постоянному camera processing loop;
 - generic object detection намеренно не реализован.
 

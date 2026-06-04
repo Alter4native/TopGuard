@@ -1,6 +1,6 @@
 import type { LoginResponse, User } from "../types";
 
-const SESSION_KEY = "ai-camera-platform-session";
+const SESSION_KEY = "topguard-session";
 
 export type Session = {
   tokens: LoginResponse;

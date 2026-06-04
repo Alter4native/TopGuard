@@ -184,6 +184,23 @@ class ModelVersionRead(BaseModel):
     created_at: datetime
 
 
+class AlgorithmQualityRead(BaseModel):
+    algorithm: str
+    status: str
+    samples: int
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    analysis: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+
+
+class QualityAnalysisRead(BaseModel):
+    status: str
+    generated_at: datetime = Field(default_factory=utc_now)
+    dataset: dict[str, Any] = Field(default_factory=dict)
+    algorithms: list[AlgorithmQualityRead] = Field(default_factory=list)
+
+
 class SettingsRead(BaseModel):
     processing_fps: int = 5
     person_confidence_threshold: float = 0.5

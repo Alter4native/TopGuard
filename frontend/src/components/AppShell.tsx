@@ -15,11 +15,11 @@ import { canWrite } from "../utils/format";
 export type ActivePage = "overview" | "cameras" | "events" | "people" | "settings";
 
 const navItems: Array<{ id: ActivePage; label: string; icon: typeof LayoutDashboard; writeOnly?: boolean }> = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "cameras", label: "Cameras", icon: Camera },
-  { id: "events", label: "Events", icon: Bell },
-  { id: "people", label: "People", icon: Users, writeOnly: true },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "overview", label: "Дашборд", icon: LayoutDashboard },
+  { id: "cameras", label: "Камеры", icon: Camera },
+  { id: "events", label: "События", icon: Bell },
+  { id: "people", label: "Люди", icon: Users, writeOnly: true },
+  { id: "settings", label: "Настройки", icon: Settings },
 ];
 
 type AppShellProps = {
@@ -39,10 +39,10 @@ function visibleNavItems(role: Role) {
 export function AppShell({ activePage, children, loading, user, onNavigate, onRefresh, onLogout }: AppShellProps) {
   return (
     <main className="app-shell">
-      <aside className="sidebar" aria-label="Primary navigation">
+      <aside className="sidebar" aria-label="Основная навигация">
         <div className="brand">
           <ShieldCheck aria-hidden="true" />
-          <span>AI Camera</span>
+          <span>TopGuard</span>
         </div>
 
         <nav className="nav-list">
@@ -66,8 +66,8 @@ export function AppShell({ activePage, children, loading, user, onNavigate, onRe
       <section className="workspace">
         <header className="topbar">
           <div>
-            <h1>Operations Dashboard</h1>
-            <p>Local MVP - one camera - person-only detection</p>
+            <h1>Центр мониторинга</h1>
+            <p>Локальная веб-камера, детекция людей и события безопасности</p>
           </div>
           <div className="topbar-actions">
             <div className="role-chip">
@@ -76,9 +76,9 @@ export function AppShell({ activePage, children, loading, user, onNavigate, onRe
               <strong>{user.role}</strong>
             </div>
             <button className="secondary-button" type="button" onClick={onRefresh} disabled={loading}>
-              {loading ? "Refreshing" : "Refresh"}
+              {loading ? "Обновление" : "Обновить"}
             </button>
-            <button className="icon-button" type="button" onClick={onLogout} aria-label="Sign out">
+            <button className="icon-button" type="button" onClick={onLogout} aria-label="Выйти">
               <LogOut aria-hidden="true" />
             </button>
           </div>

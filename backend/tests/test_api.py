@@ -198,6 +198,14 @@ def test_models_and_settings_api() -> None:
     assert settings.status_code == 200
     assert settings.json()["retention_days"] == 30
 
+    quality = client.get("/api/models/quality", headers=viewer_headers)
+    assert quality.status_code == 200
+    payload = quality.json()
+    assert payload["status"] == "available"
+    assert payload["dataset"]["models"] >= 1
+    assert [algorithm["algorithm"] for algorithm in payload["algorithms"]] == ["DBSCAN", "K-Means"]
+    assert all(algorithm["analysis"] for algorithm in payload["algorithms"])
+
     forbidden = client.patch(
         "/api/settings",
         headers=viewer_headers,

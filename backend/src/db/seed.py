@@ -37,7 +37,7 @@ def seed_camera(session: Session) -> None:
     if existing_camera is None:
         cameras.create(
             CameraCreate(
-                name="Local camera",
+                name="Локальная камера",
                 source_type="webcam",
                 source_uri="0",
                 enabled=True,
@@ -52,10 +52,10 @@ def seed_model(session: Session) -> None:
         session.add(
             ModelVersionModel(
                 model_id=new_id(),
-                name="YOLO person detector",
+                name="YOLO детектор людей",
                 version="mvp",
                 runtime="yolo",
-                path="/app/models/yolo-person.pt",
+                path="/app/models/yolov8n.pt",
                 active=True,
                 metadata_json={},
                 created_at=utc_now(),

@@ -10,9 +10,11 @@ import type {
   PersonEmbeddingRecord,
   PersonPayload,
   PersonPhoto,
+  QualityAnalysis,
   Settings,
   SnapshotMetadata,
   User,
+  WebcamDetection,
 } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
@@ -35,8 +37,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = `Request failed: ${response.status}`;
     try {
-      const payload = (await response.json()) as { detail?: string };
-      message = payload.detail ?? message;
+      const payload = (await response.json()) as { detail?: unknown };
+      if (typeof payload.detail === "string") {
+        message = payload.detail;
+      } else if (payload.detail && typeof payload.detail === "object" && "message" in payload.detail) {
+        message = String((payload.detail as { message: unknown }).message);
+      }
     } catch {
       message = response.statusText || message;
     }
@@ -62,8 +68,8 @@ async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<
   return parseResponse<T>(response);
 }
 
-async function aiFetch<T>(path: string): Promise<T> {
-  const response = await fetch(`${AI_BASE_URL}${path}`);
+async function aiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${AI_BASE_URL}${path}`, options);
   return parseResponse<T>(response);
 }
 
@@ -177,6 +183,10 @@ export function listModels(token: string): Promise<ModelVersion[]> {
   return apiFetch<ModelVersion[]>("/models", { token });
 }
 
+export function getModelQuality(token: string): Promise<QualityAnalysis> {
+  return apiFetch<QualityAnalysis>("/models/quality", { token });
+}
+
 export function getSettings(token: string): Promise<Settings> {
   return apiFetch<Settings>("/settings", { token });
 }
@@ -195,4 +205,17 @@ export function getAiHealth(): Promise<unknown> {
 
 export function getAiVectorStatus(): Promise<unknown> {
   return aiFetch<unknown>("/vector/status");
+}
+
+export function detectWebcamOnce(maxAttempts = 10): Promise<WebcamDetection> {
+  return aiFetch<WebcamDetection>(`/webcam/detect-once?max_attempts=${maxAttempts}`);
+}
+
+export function detectWebcamFrame(frame: Blob): Promise<WebcamDetection> {
+  const body = new FormData();
+  body.set("file", frame, "webcam-frame.jpg");
+  return aiFetch<WebcamDetection>("/webcam/detect-frame", {
+    method: "POST",
+    body,
+  });
 }

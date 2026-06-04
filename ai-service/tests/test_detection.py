@@ -119,13 +119,13 @@ def test_yolo_detector_handles_empty_results() -> None:
 
 
 def test_yolo_detector_metadata_reports_lazy_loaded_state() -> None:
-    detector = YoloDetector(model_path="fake.pt", confidence_threshold=0.5)
+    detector = YoloDetector(model_path="yolov8n.pt", confidence_threshold=0.5)
 
     metadata = detector.metadata().as_dict()
 
     assert metadata["runtime"] == "yolo"
     assert metadata["scope"] == "person-only"
-    assert metadata["model_path"] == "fake.pt"
+    assert metadata["model_path"] == "yolov8n.pt"
     assert metadata["loaded"] is False
 
 
@@ -162,11 +162,11 @@ def test_mock_person_detector_maps_detection_to_input_frame() -> None:
 
 
 def test_detector_factory_builds_yolo_detector() -> None:
-    detector = build_detector(runtime="yolo", model_path="model.pt", confidence_threshold=0.6)
+    detector = build_detector(runtime="yolo", model_path="yolov8n.pt", confidence_threshold=0.6)
 
     metadata = detector.metadata().as_dict()
     assert metadata["runtime"] == "yolo"
-    assert metadata["model_path"] == "model.pt"
+    assert metadata["model_path"] == "yolov8n.pt"
     assert metadata["confidence_threshold"] == 0.6
 
 

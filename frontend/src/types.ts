@@ -61,6 +61,38 @@ export type SnapshotMetadata = {
   access: "authorized";
 };
 
+export type DetectionBox = {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  width: number;
+  height: number;
+};
+
+export type WebcamDetection = {
+  camera_id: string;
+  frame_sequence: number;
+  timestamp: string;
+  frame: {
+    width: number;
+    height: number;
+  };
+  frame_image: string | null;
+  person_count: number;
+  detections: Array<{
+    camera_id: string;
+    frame_sequence: number;
+    timestamp: string;
+    bbox: DetectionBox;
+    class_id: number;
+    class_name: string;
+    confidence: number;
+  }>;
+  camera: Record<string, unknown>;
+  detector: Record<string, unknown>;
+};
+
 export type Person = {
   person_id: string;
   display_name: string;
@@ -108,6 +140,23 @@ export type ModelVersion = {
   path: string;
   active: boolean;
   created_at: string;
+};
+
+export type AlgorithmQuality = {
+  algorithm: string;
+  status: string;
+  samples: number;
+  parameters: Record<string, unknown>;
+  metrics: Record<string, unknown>;
+  analysis: string[];
+  recommendations: string[];
+};
+
+export type QualityAnalysis = {
+  status: string;
+  generated_at: string;
+  dataset: Record<string, unknown>;
+  algorithms: AlgorithmQuality[];
 };
 
 export type Settings = {

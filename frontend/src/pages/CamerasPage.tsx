@@ -14,7 +14,7 @@ type CamerasPageProps = {
 };
 
 const defaultCamera: CameraPayload = {
-  name: "Local camera",
+  name: "Локальная камера",
   source_type: "webcam",
   source_uri: "0",
   enabled: true,
@@ -40,8 +40,8 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
     <section className="page-stack">
       <div className="section-heading">
         <div>
-          <h2>Cameras</h2>
-          <p>Manage RTSP/Webcam sources, processing FPS, status and reconnect state.</p>
+          <h2>Камеры</h2>
+          <p>Управляйте локальной веб-камерой, RTSP-источниками, FPS обработки и состоянием подключения.</p>
         </div>
       </div>
 
@@ -49,8 +49,8 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
         <article className="panel camera-list-panel">
           <div className="panel-header">
             <div>
-              <h2>Configured cameras</h2>
-              <span>{cameras.length} source</span>
+              <h2>Подключенные источники</h2>
+              <span>{cameras.length} источник(ов)</span>
             </div>
             <Camera aria-hidden="true" />
           </div>
@@ -62,7 +62,9 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
                   <div className="camera-card__main">
                     <div>
                       <h3>{camera.name}</h3>
-                      <p>{camera.source_type.toUpperCase()} - {camera.source_uri}</p>
+                      <p>
+                        {camera.source_type.toUpperCase()} - {camera.source_uri}
+                      </p>
                     </div>
                     <StatusBadge tone={toneForState(camera.state)}>{stateLabel(camera.state)}</StatusBadge>
                   </div>
@@ -72,11 +74,11 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
                       <strong>{camera.processing_fps}</strong>
                     </div>
                     <div>
-                      <span>Enabled</span>
-                      <strong>{camera.enabled ? "Yes" : "No"}</strong>
+                      <span>Включена</span>
+                      <strong>{camera.enabled ? "Да" : "Нет"}</strong>
                     </div>
                     <div>
-                      <span>Last frame</span>
+                      <span>Последний кадр</span>
                       <strong>{formatDateTime(camera.last_frame_at)}</strong>
                     </div>
                   </div>
@@ -90,7 +92,7 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
                         type="button"
                         onClick={() => onUpdate(camera.camera_id, { enabled: !camera.enabled })}
                       >
-                        {camera.enabled ? "Disable" : "Enable"}
+                        {camera.enabled ? "Отключить" : "Включить"}
                       </button>
                       <button
                         className="secondary-button"
@@ -112,7 +114,7 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
               ))}
             </div>
           ) : (
-            <EmptyState title="No cameras configured" body="Add one local webcam or RTSP source to start processing." />
+            <EmptyState title="Камеры не настроены" body="Добавьте веб-камеру или RTSP-источник, чтобы запустить обработку." />
           )}
         </article>
 
@@ -120,36 +122,36 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
           <article className="panel">
             <div className="panel-header">
               <div>
-                <h2>Add camera</h2>
-                <span>One camera is enough for MVP</span>
+                <h2>Добавить камеру</h2>
+                <span>Для демо достаточно одной веб-камеры</span>
               </div>
               <Plus aria-hidden="true" />
             </div>
             <form className="form-grid" onSubmit={handleCreate}>
               <label>
-                Name
+                Название
                 <input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
               </label>
               <label>
-                Source type
+                Тип источника
                 <select
                   value={draft.source_type}
                   onChange={(event) => setDraft({ ...draft, source_type: event.target.value })}
                 >
-                  <option value="webcam">Webcam</option>
+                  <option value="webcam">Веб-камера</option>
                   <option value="rtsp">RTSP</option>
                 </select>
               </label>
               <label>
-                Source URI
+                URI источника
                 <input
                   value={draft.source_uri}
                   onChange={(event) => setDraft({ ...draft, source_uri: event.target.value })}
-                  placeholder="0 or rtsp://user:pass@ip:554/path"
+                  placeholder="0 или rtsp://user:pass@ip:554/path"
                 />
               </label>
               <label>
-                Processing FPS
+                FPS обработки
                 <input
                   min={1}
                   max={30}
@@ -164,11 +166,11 @@ export function CamerasPage({ cameras, role, onCreate, onUpdate }: CamerasPagePr
                   checked={draft.enabled}
                   onChange={(event) => setDraft({ ...draft, enabled: event.target.checked })}
                 />
-                Enabled
+                Включена
               </label>
               <button className="primary-button" type="submit">
                 <Plus aria-hidden="true" />
-                Add camera
+                Добавить камеру
               </button>
             </form>
           </article>

@@ -1,15 +1,16 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Database, Save, Settings } from "lucide-react";
+import { BarChart3, Database, Save, Settings } from "lucide-react";
 
 import { EmptyState } from "../components/EmptyState";
 import { StatusBadge } from "../components/StatusBadge";
-import type { ModelVersion, Role, Settings as SettingsRecord } from "../types";
+import type { ModelVersion, QualityAnalysis, Role, Settings as SettingsRecord } from "../types";
 import { canWrite, formatDateTime } from "../utils/format";
 
 type SettingsPageProps = {
   role: Role;
   settings: SettingsRecord | null;
   models: ModelVersion[];
+  quality: QualityAnalysis | null;
   vectorStatus: unknown;
   embeddingStatus: unknown;
   onUpdate: (payload: Partial<SettingsRecord>) => Promise<void>;
@@ -19,7 +20,32 @@ function prettyJson(payload: unknown): string {
   return JSON.stringify(payload ?? { status: "unavailable" }, null, 2);
 }
 
-export function SettingsPage({ role, settings, models, vectorStatus, embeddingStatus, onUpdate }: SettingsPageProps) {
+function formatValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "ожидает данных";
+  }
+  return String(value);
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    ready: "готово",
+    needs_data: "нужны данные",
+    available: "доступно",
+    unavailable: "недоступно",
+  };
+  return labels[status] ?? status;
+}
+
+export function SettingsPage({
+  role,
+  settings,
+  models,
+  quality,
+  vectorStatus,
+  embeddingStatus,
+  onUpdate,
+}: SettingsPageProps) {
   const [draft, setDraft] = useState<SettingsRecord>(
     settings ?? {
       processing_fps: 5,
@@ -46,23 +72,79 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
     <section className="page-stack">
       <div className="section-heading">
         <div>
-          <h2>Settings</h2>
-          <p>Manage thresholds, retention and runtime metadata for the local MVP.</p>
+          <h2>Настройки</h2>
+          <p>Управляйте порогами, хранением данных и runtime metadata локального демо.</p>
         </div>
       </div>
+
+      <article className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>Качество</h2>
+            <span>Анализ алгоритмов DBSCAN и K-Means</span>
+          </div>
+          <BarChart3 aria-hidden="true" />
+        </div>
+        {quality?.algorithms.length ? (
+          <div className="quality-grid">
+            {quality.algorithms.map((algorithm) => (
+              <section className="quality-card" key={algorithm.algorithm}>
+                <div className="quality-card__header">
+                  <div>
+                    <h3>{algorithm.algorithm}</h3>
+                    <span>активных samples: {algorithm.samples}</span>
+                  </div>
+                  <StatusBadge tone={algorithm.status === "ready" ? "good" : "warn"}>
+                    {statusLabel(algorithm.status)}
+                  </StatusBadge>
+                </div>
+
+                <div className="quality-facts">
+                  {Object.entries(algorithm.parameters).map(([key, value]) => (
+                    <span key={key}>
+                      <strong>{key}</strong>
+                      {formatValue(value)}
+                    </span>
+                  ))}
+                  {Object.entries(algorithm.metrics).map(([key, value]) => (
+                    <span key={key}>
+                      <strong>{key}</strong>
+                      {formatValue(value)}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="quality-copy">
+                  {algorithm.analysis.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+
+                <ul className="quality-list">
+                  {algorithm.recommendations.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <EmptyState title="Анализа качества пока нет" body="Данные появятся после ответа backend." />
+        )}
+      </article>
 
       <div className="content-grid content-grid--balanced">
         <article className="panel">
           <div className="panel-header">
             <div>
-              <h2>Thresholds</h2>
-              <span>{writable ? "Editable" : "Read-only viewer access"}</span>
+              <h2>Пороги</h2>
+              <span>{writable ? "Можно редактировать" : "Режим просмотра"}</span>
             </div>
             <Settings aria-hidden="true" />
           </div>
           <form className="form-grid" onSubmit={handleSubmit}>
             <label>
-              Processing FPS
+              FPS обработки
               <input
                 min={1}
                 max={30}
@@ -73,7 +155,7 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
               />
             </label>
             <label>
-              Person confidence
+              Уверенность детекции человека
               <input
                 min={0}
                 max={1}
@@ -87,7 +169,7 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
               />
             </label>
             <label>
-              Face recognition threshold
+              Порог распознавания лица
               <input
                 min={0}
                 max={1}
@@ -99,7 +181,7 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
               />
             </label>
             <label>
-              Event cooldown seconds
+              Cooldown события, секунд
               <input
                 min={0}
                 type="number"
@@ -109,7 +191,7 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
               />
             </label>
             <label>
-              Retention days
+              Хранение, дней
               <input
                 min={1}
                 type="number"
@@ -121,7 +203,7 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
             {writable ? (
               <button className="primary-button" type="submit">
                 <Save aria-hidden="true" />
-                Save settings
+                Сохранить настройки
               </button>
             ) : null}
           </form>
@@ -130,8 +212,8 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
         <article className="panel">
           <div className="panel-header">
             <div>
-              <h2>Vector database</h2>
-              <span>Qdrant health and collection metadata</span>
+              <h2>Векторная база</h2>
+              <span>Состояние Qdrant и metadata коллекции</span>
             </div>
             <Database aria-hidden="true" />
           </div>
@@ -147,31 +229,31 @@ export function SettingsPage({ role, settings, models, vectorStatus, embeddingSt
       <article className="panel">
         <div className="panel-header">
           <div>
-            <h2>Models</h2>
-            <span>{models.length} registered versions</span>
+            <h2>Модели</h2>
+            <span>зарегистрировано версий: {models.length}</span>
           </div>
         </div>
         {models.length ? (
-          <div className="events-table" role="table" aria-label="Models">
+          <div className="events-table" role="table" aria-label="Модели">
             <div className="events-row events-head models-row" role="row">
-              <span>Name</span>
+              <span>Название</span>
               <span>Runtime</span>
-              <span>Version</span>
-              <span>Active</span>
-              <span>Created</span>
+              <span>Версия</span>
+              <span>Активна</span>
+              <span>Создана</span>
             </div>
             {models.map((model) => (
               <div className="events-row models-row" key={model.model_id} role="row">
                 <span>{model.name}</span>
                 <span>{model.runtime}</span>
                 <span>{model.version}</span>
-                <span>{model.active ? "Yes" : "No"}</span>
+                <span>{model.active ? "Да" : "Нет"}</span>
                 <span>{formatDateTime(model.created_at)}</span>
               </div>
             ))}
           </div>
         ) : (
-          <EmptyState title="No models" body="Model registry will be updated by training/export stages." />
+          <EmptyState title="Моделей пока нет" body="Реестр моделей обновляется после обучения или экспорта." />
         )}
       </article>
     </section>

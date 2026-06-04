@@ -1,4 +1,5 @@
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 from typing import Any
 
 from app.detection.base import ObjectDetector, is_allowed_person_detection
@@ -7,6 +8,8 @@ from app.video.source import VideoFrame
 
 
 class YoloDetector(ObjectDetector):
+    default_pretrained_model = "yolov8n.pt"
+
     def __init__(
         self,
         model_path: str,
@@ -18,6 +21,7 @@ class YoloDetector(ObjectDetector):
             raise ValueError("confidence_threshold must be between 0 and 1")
 
         self.model_path = model_path
+        self.effective_model_path = self._effective_model_path(model_path)
         self.confidence_threshold = confidence_threshold
         self.allowed_class_names = tuple(allowed_class_names)
         self._model = model
@@ -36,7 +40,7 @@ class YoloDetector(ObjectDetector):
     def metadata(self) -> DetectorMetadata:
         return DetectorMetadata(
             runtime="yolo",
-            model_path=self.model_path,
+            model_path=self.effective_model_path,
             scope="person-only",
             confidence_threshold=self.confidence_threshold,
             loaded=self._model is not None,
@@ -49,9 +53,18 @@ class YoloDetector(ObjectDetector):
             except ImportError as exc:
                 raise RuntimeError("ultralytics is not installed") from exc
 
-            self._model = YOLO(self.model_path)
+            self._model = YOLO(self.effective_model_path)
 
         return self._model
+
+    def _effective_model_path(self, model_path: str) -> str:
+        if model_path in {"", "auto"}:
+            return self.default_pretrained_model
+
+        if model_path.endswith(".pt") and not Path(model_path).exists():
+            return self.default_pretrained_model
+
+        return model_path
 
     def _parse_result(
         self,
