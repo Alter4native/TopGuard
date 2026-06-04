@@ -1,16 +1,16 @@
-﻿{
-    "rewrites":  [
-                     {
-                         "source":  "/api/:path*",
-                         "destination":  "https://photographers-enough-clinics-absence.trycloudflare.com/api/:path*"
-                     },
-                     {
-                         "source":  "/ai/:path*",
-                         "destination":  "https://photographers-enough-clinics-absence.trycloudflare.com/ai/:path*"
-                     },
-                     {
-                         "source":  "/(.*)",
-                         "destination":  "/index.html"
-                     }
-                 ]
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://photographers-enough-clinics-absence.trycloudflare.com/api/:path*"
+    },
+    {
+      "source": "/ai/:path*",
+      "destination": "https://photographers-enough-clinics-absence.trycloudflare.com/ai/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
