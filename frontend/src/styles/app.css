@@ -561,7 +561,9 @@ button:focus-visible {
 }
 
 .detection-frame {
-  min-height: 380px;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+  background: #101820;
 }
 
 .detection-image,
@@ -570,7 +572,7 @@ button:focus-visible {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: contain;
 }
 
 .detection-video {
@@ -984,21 +986,88 @@ button:focus-visible {
 }
 
 @media (max-width: 640px) {
+  body {
+    background: #f4f6f8;
+  }
+
+  .app-shell {
+    padding-bottom: 76px;
+  }
+
   .sidebar {
-    gap: 14px;
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: block;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -12px 28px rgba(14, 25, 35, 0.18);
   }
 
   .brand {
-    font-size: 16px;
+    display: none;
+  }
+
+  .nav-list {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+  }
+
+  .nav-item {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 56px;
+    padding: 7px 4px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .nav-item svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .nav-item span {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
   }
 
   .workspace {
-    gap: 16px;
-    padding: 14px;
+    gap: 14px;
+    padding: 16px 12px 10px;
+  }
+
+  .topbar {
+    gap: 12px;
+  }
+
+  .topbar-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    width: 100%;
+  }
+
+  .role-chip {
+    min-width: 0;
+  }
+
+  .role-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .topbar h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .topbar p,
@@ -1010,11 +1079,11 @@ button:focus-visible {
   .dashboard-hero,
   .panel,
   .metric-tile {
-    padding: 14px;
+    padding: 12px;
   }
 
   .dashboard-hero h2 {
-    font-size: 22px;
+    font-size: 21px;
   }
 
   .hero-actions,
@@ -1030,7 +1099,6 @@ button:focus-visible {
 
   .video-frame {
     min-height: 0;
-    aspect-ratio: 4 / 3;
   }
 
   .detection-frame {

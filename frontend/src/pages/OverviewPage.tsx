@@ -70,6 +70,7 @@ export function OverviewPage({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [videoAspectRatio, setVideoAspectRatio] = useState("16 / 9");
   const primaryCamera = cameras[0] ?? null;
   const activeModel = models.find((model) => model.active) ?? models[0] ?? null;
   const peopleCountEvent = events.find((event) => event.event_type === "people_count");
@@ -150,6 +151,14 @@ export function OverviewPage({
     await onDetectWebcam(blob);
   }
 
+  function updateVideoAspectRatio() {
+    const video = videoRef.current;
+    if (!video?.videoWidth || !video?.videoHeight) {
+      return;
+    }
+    setVideoAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
+  }
+
   return (
     <>
       <section className="dashboard-hero">
@@ -213,8 +222,12 @@ export function OverviewPage({
             </div>
             <StatusBadge tone={detection ? "good" : "neutral"}>{detection ? "готово" : "ожидание"}</StatusBadge>
           </div>
-          <div className="video-frame detection-frame" aria-label="Результат детекции с веб-камеры">
-            <video className="detection-video" ref={videoRef} muted playsInline />
+          <div
+            className="video-frame detection-frame"
+            style={{ aspectRatio: frame ? `${frame.width} / ${frame.height}` : videoAspectRatio }}
+            aria-label="Результат детекции с веб-камеры"
+          >
+            <video className="detection-video" ref={videoRef} muted playsInline onLoadedMetadata={updateVideoAspectRatio} />
             {detection?.frame_image ? <img className="detection-image" src={detection.frame_image} alt="" /> : null}
             <canvas ref={canvasRef} hidden />
             {frame ? (
