@@ -2,11 +2,11 @@
     "rewrites":  [
                      {
                          "source":  "/api/:path*",
-                         "destination":  "https://always-carter-docs-baker.trycloudflare.com/api/:path*"
+                         "destination":  "https://algorithms-address-coaches-tuning.trycloudflare.com/api/:path*"
                      },
                      {
                          "source":  "/ai/:path*",
-                         "destination":  "https://always-carter-docs-baker.trycloudflare.com/ai/:path*"
+                         "destination":  "https://algorithms-address-coaches-tuning.trycloudflare.com/ai/:path*"
                      },
                      {
                          "source":  "/(.*)",
