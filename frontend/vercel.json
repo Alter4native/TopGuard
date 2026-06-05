@@ -2,11 +2,11 @@
     "rewrites":  [
                      {
                          "source":  "/api/:path*",
-                         "destination":  "https://encouraged-wayne-small-tabs.trycloudflare.com/api/:path*"
+                         "destination":  "https://mold-choices-fabrics-colin.trycloudflare.com/api/:path*"
                      },
                      {
                          "source":  "/ai/:path*",
-                         "destination":  "https://encouraged-wayne-small-tabs.trycloudflare.com/ai/:path*"
+                         "destination":  "https://mold-choices-fabrics-colin.trycloudflare.com/ai/:path*"
                      },
                      {
                          "source":  "/(.*)",
