@@ -71,6 +71,7 @@ export function OverviewPage({
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [videoAspectRatio, setVideoAspectRatio] = useState("16 / 9");
+  const [portraitCamera, setPortraitCamera] = useState(false);
   const primaryCamera = cameras[0] ?? null;
   const activeModel = models.find((model) => model.active) ?? models[0] ?? null;
   const peopleCountEvent = events.find((event) => event.event_type === "people_count");
@@ -113,6 +114,7 @@ export function OverviewPage({
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+        updateVideoAspectRatio();
       }
       setCameraReady(true);
       await loadCameraDevices();
@@ -156,8 +158,17 @@ export function OverviewPage({
     if (!video?.videoWidth || !video?.videoHeight) {
       return;
     }
-    setVideoAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
+    const screenIsPortrait = window.matchMedia?.("(orientation: portrait)").matches ?? window.innerHeight > window.innerWidth;
+    const sensorLooksLandscape = video.videoWidth > video.videoHeight;
+    const shouldUsePortraitRatio = screenIsPortrait && sensorLooksLandscape;
+    setPortraitCamera(shouldUsePortraitRatio);
+    setVideoAspectRatio(
+      shouldUsePortraitRatio ? `${video.videoHeight} / ${video.videoWidth}` : `${video.videoWidth} / ${video.videoHeight}`,
+    );
   }
+
+  const frameAspectRatio =
+    frame && portraitCamera && frame.width > frame.height ? `${frame.height} / ${frame.width}` : frame ? `${frame.width} / ${frame.height}` : videoAspectRatio;
 
   return (
     <>
@@ -223,11 +234,11 @@ export function OverviewPage({
             <StatusBadge tone={detection ? "good" : "neutral"}>{detection ? "готово" : "ожидание"}</StatusBadge>
           </div>
           <div
-            className="video-frame detection-frame"
-            style={{ aspectRatio: frame ? `${frame.width} / ${frame.height}` : videoAspectRatio }}
+            className={`video-frame detection-frame ${portraitCamera ? "detection-frame--portrait" : ""}`}
+            style={{ aspectRatio: frameAspectRatio }}
             aria-label="Результат детекции с веб-камеры"
           >
-            <video className="detection-video" ref={videoRef} muted playsInline onLoadedMetadata={updateVideoAspectRatio} />
+            <video className="detection-video" ref={videoRef} muted playsInline onLoadedMetadata={updateVideoAspectRatio} onResize={updateVideoAspectRatio} />
             {detection?.frame_image ? <img className="detection-image" src={detection.frame_image} alt="" /> : null}
             <canvas ref={canvasRef} hidden />
             {frame ? (

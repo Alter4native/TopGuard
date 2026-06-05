@@ -566,6 +566,12 @@ button:focus-visible {
   background: #101820;
 }
 
+.detection-frame--portrait {
+  width: min(100%, 520px);
+  max-height: min(78vh, 760px);
+  margin-inline: auto;
+}
+
 .detection-image,
 .detection-video {
   position: absolute;
@@ -581,6 +587,11 @@ button:focus-visible {
 
 .detection-image {
   z-index: 1;
+}
+
+.detection-frame--portrait .detection-image,
+.detection-frame--portrait .detection-video {
+  object-fit: cover;
 }
 
 .detection-box {
